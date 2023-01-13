@@ -1,10 +1,10 @@
 
 package com.github.hcsp.sql;
+
 import java.io.File;
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Sql {
@@ -82,14 +82,21 @@ public class Sql {
 // | 2   |
 // +-----+
     public static int countUsersWhoHaveBoughtGoods(Connection databaseConnection, Integer goodsId) throws SQLException {
-        return 0;
+        PreparedStatement preparedStatement = databaseConnection.prepareStatement("select count(distinct user_id) from `order` where goods_id=?");
+        preparedStatement.setInt(1, goodsId);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        int num = 0;
+        while (resultSet.next()) {
+            num = resultSet.getInt(1);
+        }
+        return num;
     }
 
     /**
      * 题目2：
      * 分页查询所有用户，按照ID倒序排列
      *
-     * @param pageNum 第几页，从1开始
+     * @param pageNum  第几页，从1开始
      * @param pageSize 每页有多少个元素
      * @return 指定页中的用户
      */
@@ -100,7 +107,21 @@ public class Sql {
 // | 1  | zhangsan | tel1 | beijing  |
 // +----+----------+------+----------+
     public static List<User> getUsersByPageOrderedByIdDesc(Connection databaseConnection, int pageNum, int pageSize) throws SQLException {
-        return null;
+        int fromIndex = (pageNum - 1) * pageSize;
+        PreparedStatement preparedStatement = databaseConnection.prepareStatement("select * from user  order by id desc limit ?,?");
+        preparedStatement.setInt(1, fromIndex);
+        preparedStatement.setInt(2, pageSize);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        List<User> userList = new ArrayList<User>();
+        while (resultSet.next()) {
+            User user = new User();
+            user.id = resultSet.getInt("id");
+            user.name = resultSet.getString("name");
+            user.tel = resultSet.getString("tel");
+            user.address = resultSet.getString("address");
+            userList.add(user);
+        }
+        return userList;
     }
 
     // 商品及其营收
@@ -208,9 +229,9 @@ public class Sql {
         try (Connection connection = DriverManager.getConnection(jdbcUrl, "root", "Jxi1Oxc92qSj")) {
             System.out.println(countUsersWhoHaveBoughtGoods(connection, 1));
             System.out.println(getUsersByPageOrderedByIdDesc(connection, 2, 3));
-            System.out.println(getGoodsAndGmv(connection));
-            System.out.println(getInnerJoinOrders(connection));
-            System.out.println(getLeftJoinOrders(connection));
+//            System.out.println(getGoodsAndGmv(connection));
+//            System.out.println(getInnerJoinOrders(connection));
+//            System.out.println(getLeftJoinOrders(connection));
         }
     }
 
